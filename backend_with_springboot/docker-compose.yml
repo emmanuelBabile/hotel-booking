@@ -1,0 +1,71 @@
+version: '3.9'
+services:
+
+  springboot-ms-room:
+    container_name: springboot-msroom-container
+    build:
+      context: ./ms-room
+      dockerfile: Dockerfile
+    ports:
+      - '8091:8081'
+    depends_on:
+      - mysql_service
+      - springboot-ms-client
+    environment:
+      - spring.jpa.hibernate.ddl-auto=create
+      - spring.datasource.url=jdbc:mysql://mysql-service-container:3306/hotelbooking
+      - spring.datasource.username=root
+      - spring.datasource.password=1234
+      - spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+    networks:
+      appnet:
+
+
+  springboot-ms-client:
+    container_name: springboot-msclient-container
+    build:
+      context: ./ms-client
+      dockerfile: Dockerfile
+    ports:
+      - '8090:8080'
+    depends_on:
+      - mysql_service
+    environment:
+      - spring.jpa.hibernate.ddl-auto=create
+      - spring.datasource.url=jdbc:mysql://mysql-service-container:3306/hotelbooking
+      - spring.datasource.username=root
+      - spring.datasource.password=1234
+      - spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+    networks:
+      appnet:
+
+  mysql_service:
+    container_name: mysql-service-container
+    image: mysql:latest
+    restart: unless-stopped
+    volumes:
+      - "./db-data:/var/lib/mysql"
+    ports:
+      - '3307:3306'
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_DATABASE=hotelbooking
+    networks:
+      appnet:
+
+  php_myadmin_service:
+    container_name: phpmyadmin-service
+    depends_on:
+      - mysql_service
+    image: phpmyadmin
+    restart: no
+    ports:
+      - '7080:80'
+    environment:
+      - PMA_HOST=mysql-service-container
+      - MYSQL_ROOT_PASSWORD=1234
+    networks:
+      appnet:
+
+networks:
+  appnet:
